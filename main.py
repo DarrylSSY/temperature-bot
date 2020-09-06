@@ -14,32 +14,32 @@ def main():
 
 	with open('subscribers.csv', newline='') as csvfile:
 		file = csv.reader(csvfile, delimiter=',')
-		for subscribers in file:
-			subscribers = subscribers
+		subscribers = []
+		for user in file:
+			subscribers.append(user)
 
-
-	d = datetime.now()
-	d_aware = timezone.localize(d)
-	d_aware.tzinfo
-
-	day = date.strftime(d, '%d/%m/%Y')
-	schedule.every().day.at("08:00").do(automate_temp,'AM', subscribers, groupCode, day)
-	schedule.every().day.at("16:00").do(automate_temp,'PM', subscribers, groupCode, day)
-	schedule.every().day.at("20:00").do(automate_temp,'PM', subscribers, groupCode, day)
-
+	schedule.every().day.at("08:00").do(automate_temp,'AM', subscribers, groupCode)
+	schedule.every().day.at("16:00").do(automate_temp,'PM', subscribers, groupCode)
 	while True:
 		schedule.run_pending()
 		time.sleep(60)  # wait one minute
 
 def send_temp(groupCode, day, meridies, memberId, temperature,pin):
+
 	url = 'https://temptaking.ado.sg/group/MemberSubmitTemperature'
-	data = {'groupCode': groupCode, 'date': day, 'meridies': meridies, 'memberId': memberId, 'temperature': temperature,'pin': pin}
+	data = {'groupCode': groupCode, 'date': day, 'meridies': meridies, 'memberId': memberId, 'temperature': temperature,'pin': str(pin)}
 	x = requests.post(url, data)
+	print("Attempting to submit temperature of " + str(temperature) + " to " + meridies + " of " + str(day) + " for member with ID " + str(memberId))
 	print(x.text)
 
-def automate_temp(meridies, subscribers, groupCode, day):
+def automate_temp(meridies, subscribers, groupCode):
+	d = datetime.now()
+	d_aware = timezone.localize(d)
+	d_aware.tzinfo
+
+	day = date.strftime(d, '%d/%m/%Y')
 	for subscriber in subscribers:
 		temperature = float("36." + str(random.randrange(10)))
-		send_temp(groupCode, day, meridies, subscriber, temperature, "0000")
+		send_temp(groupCode, day, meridies, subscriber[0], temperature, str(subscriber[1]))
 
 main()
